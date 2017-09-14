@@ -1,0 +1,97 @@
+#######################################################################
+#
+# This is the main Nginx configuration file.  
+#
+# More information about the configuration options is available on 
+#   * the English wiki - http://wiki.nginx.org/Main
+#   * the Russian documentation - http://sysoev.ru/nginx/
+#
+#######################################################################
+
+#----------------------------------------------------------------------
+# Main Module - directives that cover basic functionality
+#
+#   http://wiki.nginx.org/NginxHttpMainModule
+#
+#----------------------------------------------------------------------
+
+user              nginx;
+worker_processes  {{ grains['num_cpus'] }};
+
+error_log  /var/log/nginx/error.log;
+#error_log  /var/log/nginx/error.log  notice;
+#error_log  /var/log/nginx/error.log  info;
+
+pid        /var/run/nginx.pid;
+
+
+#----------------------------------------------------------------------
+# Events Module 
+#
+#   http://wiki.nginx.org/NginxHttpEventsModule
+#
+#----------------------------------------------------------------------
+
+events {
+    worker_connections  20000;
+}
+
+
+#----------------------------------------------------------------------
+# HTTP Core Module
+#
+#   http://wiki.nginx.org/NginxHttpCoreModule 
+#
+#----------------------------------------------------------------------
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+
+    log_format  main  '$http_host '
+                      '$remote_addr - $remote_user [$time_local] '
+                      '"$request" $status $body_bytes_sent "$request_body" '
+                      '"$http_referer" "$http_user_agent" "$proxy_add_x_forwarded_for" '
+                      '$request_time '
+                      '$upstream_response_time';
+
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  120;
+    client_header_timeout 90;
+    client_body_timeout 90;
+    client_max_body_size 100m;
+
+    client_header_buffer_size 16k;
+    large_client_header_buffers 4 64k;
+
+
+#    add_header Access-Control-Allow-Origin *;
+#    add_header Access-Control-Allow-Headers Origin,X-Requested-With,Content-Type,Accept;
+#    add_header Access-Control-Allow-Headers Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,auth-token;
+#    add_header Access-Control-Allow-Methods GET,POST,OPTIONS;
+
+    #gzip  on;
+    gzip on;
+    #gzip_min_length 1k;
+    gzip_buffers 4 16k;
+    #gzip_http_version 1.0;
+    gzip_comp_level 8;
+    gzip_types text/plain application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;
+    gzip_vary off;
+    gzip_disable "MSIE [1-6]\.";
+    gzip_proxied any; 
+
+    #etag off;	    
+    # Load config files from the /etc/nginx/conf.d directory
+    # The default server is in conf.d/default.conf
+    include /etc/nginx/conf.d/*.conf;
+
+}
+
